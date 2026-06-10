@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Query, Request, Response
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, generate_latest
 
-from app.core import add
+from app.core import add, sub
 
 
 app = FastAPI(title="Test API", version="0.1.0")
@@ -57,6 +57,13 @@ def add_route(
     y: int = Query(..., description="Second integer"),
 ) -> dict:
     return {"result": add(x, y)}
+
+@app.get("/api/sub")
+def add_route(
+    x: int = Query(..., description="First integer"),
+    y: int = Query(..., description="Second integer"),
+) -> dict:
+    return {"result": sub(x, y)}
 
 
 @app.get("/metrics")
