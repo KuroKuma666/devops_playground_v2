@@ -78,7 +78,7 @@ def sub_route(
 ) -> dict:
     return {"result": sub(x, y)}
 
-# This is the endpoint that Prometheus will scrape to collect metrics. When Prometheus scrapes this endpoint, it will receive the latest metrics in a format that it can understand and process. The `generate_latest()` function from the `prometheus_client` library is used to generate the latest metrics data, and we set the `Content-Type` header to `CONTENT_TYPE_LATEST` to indicate that the response contains Prometheus metrics. So, when Prometheus calls http://server:8000/metrics, it receives data like request counters, process metrics, and any custom metrics we have defined, which it can then store and use for monitoring and alerting purposes.
+# This is the endpoint that Prometheus will scrape to collect metrics. When Prometheus scrapes this endpoint, it will receive the latest metrics in a format that it can understand and process. The `generate_latest()` function from the `prometheus_client` library is used to generate the latest metrics data, and we set the `Content-Type` header to `CONTENT_TYPE_LATEST` to indicate that the response contains Prometheus metrics. So, when Prometheus calls http://server:8000/metrics, it receives data like request counters, process metrics, and any custom metrics we have defined, which it can then store and use for monitoring and alerting purposes. (see prometheus.yml for configuration)
 @app.get("/metrics")
 def metrics() -> Response:
     return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
