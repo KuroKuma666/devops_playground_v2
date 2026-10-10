@@ -26,6 +26,8 @@ This project is for educational purpose. It illustrates a project with some rele
 ├── myapp.yml                     # Minikube/Kubernetes backend deployment
 ├── prometheus.yml                # Prometheus scrape configuration
 ├── pyproject.toml                # Python project metadata and test dependencies
+├── README.md                     # Documentation and Instructions
+├── requirements.txt              # Dependencies (based on the pyproject.toml)
 ├── deploy-local.ps1              # Starts the local Docker Compose deployment
 ├── deploy-minikube.ps1           # Builds and deploys the backend to Minikube
 └── stop-minikube.ps1             # Stops the Minikube deployment
@@ -37,6 +39,7 @@ This repository includes:
 
 - Git version control with repository metadata in `.git/`.
 - GitHub project automation with a GitHub Actions CI workflow in `.github/workflows/CI.yml`.
+  - Now incuding a SBOM (enable the Dependency graph in the Advanced Security of the repository)
 - A client-server architecture:
   - Backend: a FastAPI project in `server/src/app`, packaged with `pyproject.toml`.
   - Backend tests: pytest tests in `server/tests`.
@@ -127,6 +130,33 @@ docker compose up --build
 ## Workflow
 To demonstrate CI in GitHub, the workflow runs tests and imports the FastAPI app. The workflow is defined in `.github/workflows/CI.yml`.
 
+### Software Bill of Materials
+
+The CI workflow submits the dependencies in `requirements.txt` to GitHub's
+Dependency Graph and exports its SPDX JSON Software Bill of Materials (SBOM) as
+the `dependency-graph-sbom` artifact for each workflow run. Keep
+`requirements.txt` aligned with the runtime dependencies in `pyproject.toml`.
+The SBOM is a useful inventory of the software components in this repository;
+generating it does not by itself demonstrate compliance with any regulation.
+
+The European Union's Cyber Resilience Act (CRA), [Regulation (EU)
+2024/2847](https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng), applies to
+products with digital elements within its scope. Under Article 13(6),
+manufacturers must identify and document vulnerabilities and components,
+including by drawing up a software bill of materials in a commonly used,
+machine-readable format that covers at least the product's top-level
+dependencies. The main CRA obligations, including this SBOM requirement, apply
+from **11 December 2027**. The vulnerability-reporting obligations apply
+earlier, from **11 September 2026**.
+
+The SBOM requirement is not a general requirement to publish the SBOM for
+everyone: manufacturers must make it available to market surveillance
+authorities upon request. See the [European Commission's CRA
+overview](https://digital-strategy.ec.europa.eu/en/policies/cyber-resilience-act)
+and the [full Regulation](https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng)
+for details. This repository's generated SBOM is an educational CI artifact,
+not a claim that the project or its build process meets all CRA requirements.
+
 ## Local Deployment Simulation
 A "deployment" via docker compose is defined in:
 ````sh
@@ -159,35 +189,7 @@ In the ``docker-compose.yml`` images of **Grafana** and **Prometheus** are inclu
 ````
 tells Prometheus to scrape http://server:8000/metrics (within the container!) and attach the label job="server" to those metrics (it pulls the data into Prometheus’ time‑series database with that job label.)
 
-# Software Bill of Materials
-
-The CI workflow submits the dependencies in `requirements.txt` to GitHub's
-Dependency Graph and exports its SPDX JSON Software Bill of Materials (SBOM) as
-the `dependency-graph-sbom` artifact for each workflow run. Keep
-`requirements.txt` aligned with the runtime dependencies in `pyproject.toml`.
-The SBOM is a useful inventory of the software components in this repository;
-generating it does not by itself demonstrate compliance with any regulation.
-
-The European Union's Cyber Resilience Act (CRA), [Regulation (EU)
-2024/2847](https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng), applies to
-products with digital elements within its scope. Under Article 13(6),
-manufacturers must identify and document vulnerabilities and components,
-including by drawing up a software bill of materials in a commonly used,
-machine-readable format that covers at least the product's top-level
-dependencies. The main CRA obligations, including this SBOM requirement, apply
-from **11 December 2027**. The vulnerability-reporting obligations apply
-earlier, from **11 September 2026**.
-
-The SBOM requirement is not a general requirement to publish the SBOM for
-everyone: manufacturers must make it available to market surveillance
-authorities upon request. See the [European Commission's CRA
-overview](https://digital-strategy.ec.europa.eu/en/policies/cyber-resilience-act)
-and the [full Regulation](https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng)
-for details. This repository's generated SBOM is an educational CI artifact,
-not a claim that the project or its build process meets all CRA requirements.
-
-
-# Ports
+## Ports
 The script `deploy-local.ps1` will run `docker-compose.yml`. The services run on `127.0.0.1` (localhost) following ports:
 | Service                  | Port |
 | ------------------------ | ---- |
