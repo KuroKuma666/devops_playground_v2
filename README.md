@@ -105,14 +105,14 @@ services:
     build:
       context: .
       dockerfile: server/Dockerfile
-    container_name: test_server
+    container_name: devops_test_server
     ports:
       - "8000:8000"
   client:
     build:
       context: ./client
       dockerfile: Dockerfile
-    container_name: test_client
+    container_name: devops_test_client
     depends_on:
       - server
     ports:
@@ -158,6 +158,32 @@ In the ``docker-compose.yml`` images of **Grafana** and **Prometheus** are inclu
 ````
 tells Prometheus to scrape http://server:8000/metrics (within the container!) and attach the label job="server" to those metrics (it pulls the data into Prometheus’ time‑series database with that job label.)
 
+# Software Bill of Materials
+
+The CI workflow generates an SPDX JSON Software Bill of Materials (SBOM) and
+uploads it as the `sbom` artifact for each workflow run. It is a useful
+inventory of the software components in this repository; generating this file
+does not by itself demonstrate compliance with any regulation.
+
+The European Union's Cyber Resilience Act (CRA), [Regulation (EU)
+2024/2847](https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng), applies to
+products with digital elements within its scope. Under Article 13(6),
+manufacturers must identify and document vulnerabilities and components,
+including by drawing up a software bill of materials in a commonly used,
+machine-readable format that covers at least the product's top-level
+dependencies. The main CRA obligations, including this SBOM requirement, apply
+from **11 December 2027**. The vulnerability-reporting obligations apply
+earlier, from **11 September 2026**.
+
+The SBOM requirement is not a general requirement to publish the SBOM for
+everyone: manufacturers must make it available to market surveillance
+authorities upon request. See the [European Commission's CRA
+overview](https://digital-strategy.ec.europa.eu/en/policies/cyber-resilience-act)
+and the [full Regulation](https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng)
+for details. This repository's generated SBOM is an educational CI artifact,
+not a claim that the project or its build process meets all CRA requirements.
+
+
 # Ports
 The script `deploy-local.ps1` will run `docker-compose.yml`. The services run on `127.0.0.1` (localhost) following ports:
 | Service                  | Port |
@@ -166,4 +192,5 @@ The script `deploy-local.ps1` will run `docker-compose.yml`. The services run on
 | Server (python fastapi)  | 8000 |
 | Grafana                  | 3000 |
 | Prometheus               | 9090 |
+
 
