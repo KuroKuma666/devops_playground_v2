@@ -8,16 +8,12 @@ on:
 jobs:
   run-app:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@v5
-      - name: Generate SBOM
-        uses: anchore/sbom-action@v0
-        with:
-          path: .
-          format: spdx-json
-          output-file: sbom.spdx.json
-          artifact-name: sbom
       - name: Setup Python
         uses: actions/setup-python@v6
         with:
@@ -30,3 +26,66 @@ jobs:
         run: pytest
       - name: Import app
         run: python -c "from app.main import app; print(app.title)"
+      - name: Submit dependencies to GitHub Dependency Graph
+        uses: advanced-security/component-detection-dependency-submission-action@v0.2.0
+        with:
+          detectorArgs: Pip=EnableIfDefaultOff
+      - name: Export dependency graph SBOM
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          api_url="https://api.github.com/repos/${GITHUB_REPOSITORY}/dependency-graph/sbom"
+          headers=(
+            -H "Accept: application/vnd.github+json"
+            -H "Authorization: Bearer ${GH_TOKEN}"
+            -H "X-GitHub-Api-Version: 2026-03-10"
+          )
+          generation=$(curl --fail --silent --show-error --location \
+            "${headers[@]}" \
+            "${api_url}/generate-report")
+          sbom_url=$(jq -er '.sbom_url' <<< "$generation")
+
+          for attempt in {1..60}; do
+            status=$(curl --silent --show-error \
+              --output "$RUNNER_TEMP/sbom-response" \
+              --dump-header "$RUNNER_TEMP/sbom-headers" \
+              --write-out '%{http_code}' \
+              "${headers[@]}" \
+              "$sbom_url")
+
+            if [ "$status" = "302" ]; then
+              download_url=$(awk 'tolower($1) == "location:" {
+                $1 = ""
+                sub(/^[[:space:]]+/, "")
+                sub(/\r$/, "")
+                print
+                exit
+              }' "$RUNNER_TEMP/sbom-headers")
+              if [ -z "$download_url" ]; then
+                echo "SBOM report was ready but no download URL was returned." >&2
+                exit 1
+              fi
+              curl --fail --silent --show-error --location \
+                "$download_url" --output sbom.spdx.json
+              break
+            fi
+
+            if [ "$status" != "202" ]; then
+              cat "$RUNNER_TEMP/sbom-response" >&2
+              echo "Unexpected response while waiting for SBOM: HTTP $status" >&2
+              exit 1
+            fi
+
+            sleep 5
+          done
+
+          if [ ! -s sbom.spdx.json ]; then
+            echo "Timed out waiting for the dependency graph SBOM." >&2
+            exit 1
+          fi
+      - name: Upload dependency graph SBOM
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-graph-sbom
+          path: sbom.spdx.json
+          if-no-files-found: error

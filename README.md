@@ -22,6 +22,7 @@ This project is for educational purpose. It illustrates a project with some rele
 │   ├── src/app/                  # Backend application code
 │   └── tests/                    # Pytest backend tests
 ├── docker-compose.yml            # Local multi-container setup
+├── requirements.txt              # Runtime dependency manifest for GitHub's dependency graph
 ├── myapp.yml                     # Minikube/Kubernetes backend deployment
 ├── prometheus.yml                # Prometheus scrape configuration
 ├── pyproject.toml                # Python project metadata and test dependencies
@@ -160,10 +161,12 @@ tells Prometheus to scrape http://server:8000/metrics (within the container!) an
 
 # Software Bill of Materials
 
-The CI workflow generates an SPDX JSON Software Bill of Materials (SBOM) and
-uploads it as the `sbom` artifact for each workflow run. It is a useful
-inventory of the software components in this repository; generating this file
-does not by itself demonstrate compliance with any regulation.
+The CI workflow submits the dependencies in `requirements.txt` to GitHub's
+Dependency Graph and exports its SPDX JSON Software Bill of Materials (SBOM) as
+the `dependency-graph-sbom` artifact for each workflow run. Keep
+`requirements.txt` aligned with the runtime dependencies in `pyproject.toml`.
+The SBOM is a useful inventory of the software components in this repository;
+generating it does not by itself demonstrate compliance with any regulation.
 
 The European Union's Cyber Resilience Act (CRA), [Regulation (EU)
 2024/2847](https://eur-lex.europa.eu/eli/reg/2024/2847/oj/eng), applies to
@@ -192,5 +195,4 @@ The script `deploy-local.ps1` will run `docker-compose.yml`. The services run on
 | Server (python fastapi)  | 8000 |
 | Grafana                  | 3000 |
 | Prometheus               | 9090 |
-
 
